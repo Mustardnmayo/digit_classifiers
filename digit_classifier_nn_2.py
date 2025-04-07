@@ -2,8 +2,6 @@ from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader
 import numpy as np
 
-a = 'this is a test string'
-print(f'{a =}')
 
 def normalize(images):
     # make the data in the range [0,1]
