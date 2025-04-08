@@ -146,7 +146,7 @@ class neural_network(object): #make this work (duh)
 
 
 net = neural_network((28*28),10,np.array([128,32]))
-print(net)
+print(f'{net = }')
 
 
 
