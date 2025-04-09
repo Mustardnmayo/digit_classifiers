@@ -153,13 +153,13 @@ print(f'{net = }')
 class neural_network(object):
 
     @staticmethod
-    def sigmoid(x,derivative=False):
+    def sigmoid(z,derivative=False):
         # this will work w/ np arrays
         if derivative:
-            x = neural_network.sigmoid(x) 
-            return (x*(1-x))
+            z = neural_network.sigmoid(z) 
+            return (z*(1-z))
         #np.exp has default base of e
-        return 1/(1 + np.exp(-x))
+        return 1/(1 + np.exp(-z))
     
 
     def __init__(self,sizes):
@@ -178,8 +178,16 @@ class neural_network(object):
             #dot product is [1,2]dot[3,4] = sum[a_i * b_i] = 3+8 = 11
         return input
     
+    def cost_derivative(self,output_activations,y):
+        return output_activations-y #I THINK THIS IS WRONG
+
     def update_mini_batch(mini_batch,learning_rate):
-        pass
+        '''
+        mini batch is list of tuples (image,label)
+        '''
+        for image,label in mini_batch:
+            pass
+
 
     def SDG(self,training_data,minibatch_size,epochs,leanring_rate):
         n = len(training_data)
