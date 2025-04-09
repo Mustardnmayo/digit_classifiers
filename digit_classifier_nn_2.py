@@ -60,9 +60,9 @@ train_images_flattened_normalized = normalize(train_images_flattened)
 
 train_data = list(zip(train_images_flattened_normalized,train_labels))
 
-data_iter = iter(train_data)
-image,label = next(data_iter)
-print(f'{image = }\n {int(label) = }')
+#data_iter = iter(train_data) # a list of tuples w/ image first, then lable value
+#image,label = next(data_iter)
+#print(f'{image = }\n {int(label) = }')
 
 
 '''
@@ -178,6 +178,23 @@ class neural_network(object):
             #dot product is [1,2]dot[3,4] = sum[a_i * b_i] = 3+8 = 11
         return input
     
+    def update_mini_batch(mini_batch,learning_rate):
+        pass
+
+    def SDG(self,training_data,minibatch_size,epochs,leanring_rate):
+        n = len(training_data)
+        for i in range(epochs):
+            training_data = np.random.shuffle(training_data)
+            mini_batches = [training_data[k:k+minibatch_size] for k in range(0,n,minibatch_size)]
+
+            for mini_batch in mini_batches:
+                self.update_mini_batch(mini_batch,leanring_rate)
+                print(f'epoch {i} complete')
+
+
     
+    def testing(self,testing_data,batch_size):
+        pass
+
 
 
