@@ -64,8 +64,8 @@ data_iter = iter(train_data)
 image,label = next(data_iter)
 print(f'{image = }\n {int(label) = }')
 
-#-----------------------------------------------------THE DATA LINE---------------------------------------------------------------
 
+'''
 class neural_network(object): #make this work (duh)
     def __init__(self,input_layer,output,hidden_layers=np.array([])): #hidden_layers is a list of lengths
 
@@ -147,7 +147,37 @@ class neural_network(object): #make this work (duh)
 
 net = neural_network((28*28),10,np.array([128,32]))
 print(f'{net = }')
+'''
 
 
+class neural_network(object):
+
+    @staticmethod
+    def sigmoid(x,derivative=False):
+        # this will work w/ np arrays
+        if derivative:
+            x = neural_network.sigmoid(x) 
+            return (x*(1-x))
+        #np.exp has default base of e
+        return 1/(1 + np.exp(-x))
+    
+
+    def __init__(self,sizes):
+        assert(isinstance(sizes, np.array) and 'sizes needs to be a numpy array')
+        self.sizes = sizes
+        self.biases = [(np.random.randn(y,1) for y in sizes[1:])] # no biases for input layer
+        self.weights = [(np.random.randn(y,x) for x,y in zip(sizes[:-1],sizes[1:]))] #weights matrix for layers
+        #the above line indexs over lists [all sizes except last] and [all sizes except first], to create 
+        # matrices of layer X nextlayer
+        print(f'{self.biases[0] = }')
+        print(f'{self.weights[0] = }')
+
+    def feed_forward(self,input):
+        for b,w in zip(self.biases,self.weights):
+            input = neural_network.sigmoid(np.dot(w,input)+b) 
+            #dot product is [1,2]dot[3,4] = sum[a_i * b_i] = 3+8 = 11
+        return input
+    
+    
 
 
