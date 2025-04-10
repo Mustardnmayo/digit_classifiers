@@ -47,7 +47,7 @@ def vector_average(list_of_vectors):
 def probabilitificator(labels):
     new_labels = []
     for label in labels:
-        new_label = np.zeros(10)
+        new_label = np.zeros(10,dtype=np.int8)
         new_label[label] = 1
         new_labels.append((new_label,label))
     return new_labels
@@ -70,7 +70,7 @@ train_images_flattened_normalized = normalize(train_images_flattened)
 train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
 #list of tuples, (image,labels_probability_vector)
 
-#print(f'{train_data[0] = }')
+print(f'{train_data[0] = }')
 
 '''
 class neural_network(object): #make this work (duh)
@@ -173,7 +173,7 @@ class neural_network(object):
         assert((isinstance(sizes, list) or isinstance(sizes,np.array)) and 'sizes needs to be a numpy array')
         self.sizes = sizes
         self.biases = [(np.random.randn(y,1) for y in sizes[1:])] # no biases for input layer
-        self.weights = [(np.random.randn(y,x) for x,y in zip(sizes[:-1],sizes[1:]))] #weights matrix for layers
+        self.weights = [(np.np.random.randn(y,x) for x,y in zip(sizes[:-1],sizes[1:]))] #weights matrix for layers
         #the above line indexs over lists [all sizes except last] and [all sizes except first], to create 
         # matrices of layer by nextlayer
         print(f'{self.biases = }')
@@ -181,7 +181,7 @@ class neural_network(object):
 
     def forward(self,input):
         for b,w in zip(self.biases,self.weights):
-            input = neural_network.sigmoid(np.dot(w,input)+b) 
+            input = neural_network.sigmoid(np.dot(w,input)+b)
             #dot product is [1,2]dot[3,4] = sum[a_i * b_i] = 3+8 = 11
         return input
     
@@ -197,11 +197,6 @@ class neural_network(object):
     def cost_derivative(output_activations,y):
         return (output_activations-y)
 
-    
-    
-
-
-    
     def testing(self,testing_data,batch_size):
         pass
 
