@@ -44,6 +44,17 @@ def vector_average(list_of_vectors):
         assert((len(vector) != len(list_of_vectors[0])) and f"Not all vectors are the same length \n vector_average {len(list_of_vectors[0])} != {len(vector) = } at index {list_of_vectors.index(vector)}")
     return np.mean(list_of_vectors,0)
 
+def probabilitificator(labels):
+    print(labels)
+    new_labels = []
+    for label in labels:
+        new_label = np.zeros(10)
+        new_label[label] = 1
+        new_labels.append((new_label,label))
+    print(f'{new_labels[0] = }')
+    return new_labels
+
+
 #-----------------------------------------------------THE FUNCTION LINE---------------------------------------------------------------
 
 train_dataset = MNIST(root = './data',train=True,download=True)
@@ -53,17 +64,15 @@ train_images = train_dataset.data.numpy()
 train_labels = train_dataset.targets.numpy()
 
 train_images_flattened = np.array(train_images).reshape(len(train_images),-1)
-print(f'{train_images_flattened[0].shape = }\n{train_images_flattened[0] = }')
+#print(f'{train_images_flattened[0].shape = }\n{train_images_flattened[0] = }')
 
 
 train_images_flattened_normalized = normalize(train_images_flattened)
 
-train_data = list(zip(train_images_flattened_normalized,train_labels))
+train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
+#list of tuples, (image,labels_probability_vector)
 
-#data_iter = iter(train_data) # a list of tuples w/ image first, then lable value
-#image,label = next(data_iter)
-#print(f'{image = }\n {int(label) = }')
-
+print(f'{train_data[0] = }')
 
 '''
 class neural_network(object): #make this work (duh)
@@ -168,7 +177,7 @@ class neural_network(object):
         self.biases = [(np.random.randn(y,1) for y in sizes[1:])] # no biases for input layer
         self.weights = [(np.random.randn(y,x) for x,y in zip(sizes[:-1],sizes[1:]))] #weights matrix for layers
         #the above line indexs over lists [all sizes except last] and [all sizes except first], to create 
-        # matrices of layer X nextlayer
+        # matrices of layer by nextlayer
         print(f'{self.biases[0] = }')
         print(f'{self.weights[0] = }')
 
@@ -178,26 +187,20 @@ class neural_network(object):
             #dot product is [1,2]dot[3,4] = sum[a_i * b_i] = 3+8 = 11
         return input
     
-    def cost_derivative(self,output_activations,y):
-        return output_activations-y #I THINK THIS IS WRONG
-
-    def update_mini_batch(mini_batch,learning_rate):
-        '''
-        mini batch is list of tuples (image,label)
-        '''
-        for image,label in mini_batch:
+    def SGD(training_data,mini_batch_size,epochs,eta):
+        for i in range(epochs):
+            np.random.shuffle(training_data)
             pass
 
 
-    def SDG(self,training_data,minibatch_size,epochs,leanring_rate):
-        n = len(training_data)
-        for i in range(epochs):
-            training_data = np.random.shuffle(training_data)
-            mini_batches = [training_data[k:k+minibatch_size] for k in range(0,n,minibatch_size)]
+            print(f'epoch {i} completed, loss is: ...')
 
-            for mini_batch in mini_batches:
-                self.update_mini_batch(mini_batch,leanring_rate)
-                print(f'epoch {i} complete')
+    @staticmethod
+    def cost_derivative(output_activations,y):
+        return (output_activations-y)
+
+    
+    
 
 
     
