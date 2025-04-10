@@ -45,13 +45,13 @@ def vector_average(list_of_vectors):
     return np.mean(list_of_vectors,0)
 
 def probabilitificator(labels):
-    print(labels)
+    #print(labels)
     new_labels = []
     for label in labels:
         new_label = np.zeros(10)
         new_label[label] = 1
         new_labels.append((new_label,label))
-    print(f'{new_labels[0] = }')
+    #print(f'{new_labels[0] = }')
     return new_labels
 
 
