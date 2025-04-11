@@ -157,16 +157,18 @@ print(f'{net = }')
 '''
 def bias_generator(sizes):
     biases = []
-    for layer_len in sizes:
-        biases.append(np.random.randn(layer_len,1))
-    print(f'lengths of bias lists \n\t{str([len(b) for b in biases ])}')
+    for index,layer_len in enumerate(sizes):
+        if index == 0:
+            continue
+        biases.append(np.random.randn(layer_len))
+    print(f'shapes of bias vectors \n\t{str([b.shape for b in biases ])}\n')
     return biases
 
 def weight_generator(sizes):
     weights = []
-    for l1,l2 in zip(sizes[:-1], sizes[1:]):
-        weights.append(np.random.randn(l2,l1))
-    print(f'weights in weight generator func:\n\t{str([w.shape for w in weights ])}\n')
+    for x,y in zip(sizes[:-1], sizes[1:]):
+        weights.append(np.random.randn(x,y))
+    print(f'shapes of weight matrices:\n\t{str([w.shape for w in weights ])}\n')
     return weights
 
 class neural_network(object):
@@ -191,14 +193,19 @@ class neural_network(object):
         # matrices of layer by nextlayer
         '''
         self.biases = bias_generator(sizes)
-        self.weights = weight_generator(sizes) #REMEMBER FOR LATER: mXn * nXp = mXp
+        self.weights = weight_generator(sizes) #REMEMBER FOR LATER: mn * np = mp
         
     def forward(self,input): #need this funciton for later, not for backprop
-        b_w_zipper = zip(self.biases,self.weights)
-        print(f'{b_w_zipper = }')
-        for b,w in b_w_zipper:
-            input = neural_network.sigmoid(np.dot(w,input)+b)
-            #dot product is [1,2]dot[3,4] = sum[a_i * b_i] = 3+8 = 11
+        assert(input.shape == (1,784))    
+        for layer in range(len(self.sizes)-1):
+            b = self.biases[layer]
+            print(f'{b.shape = }')
+            w = self.weights[layer]
+            print(f'{w.shape = }')
+            print(f'operation: ({input.shape} dot {w.shape}) + {b.shape}')
+            input = neural_network.sigmoid(np.dot(input,w)+b)
+            print(f'{input.shape = }')
+        
         return input
     
     def SGD(self,training_data,mini_batch_size,epochs,eta):
@@ -217,8 +224,8 @@ class neural_network(object):
         pass
 
 
-network = neural_network([28*28, 128,32,10])
+network = neural_network([28*28,128,32,10])
 a = train_data[0][0]
 #print(f'{a = }')
-a = network.forward(train_data[0][0])
-print(f'{a = }')
+a = network.forward(np.array(train_data[0][0]).reshape((1,784)))
+print(f'{a.shape = }\n {a = }')
