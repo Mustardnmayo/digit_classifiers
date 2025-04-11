@@ -70,7 +70,7 @@ train_images_flattened_normalized = normalize(train_images_flattened)
 train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
 #list of tuples, (image,labels_probability_vector)
 
-print(f'{train_data[0] = }')
+#print(f'{train_data[0] = }')
 
 '''
 class neural_network(object): #make this work (duh)
@@ -155,7 +155,19 @@ class neural_network(object): #make this work (duh)
 net = neural_network((28*28),10,np.array([128,32]))
 print(f'{net = }')
 '''
+def bias_generator(sizes):
+    biases = []
+    for layer_len in sizes:
+        biases.append(np.random.randn(layer_len,1))
+    print(f'lengths of bias lists \n\t{str([len(b) for b in biases ])}')
+    return biases
 
+def weight_generator(sizes):
+    weights = []
+    for l1,l2 in zip(sizes[:-1], sizes[1:]):
+        weights.append(np.random.randn(l2,l1))
+    print(f'weights in weight generator func:\n\t{str([w.shape for w in weights ])}\n')
+    return weights
 
 class neural_network(object):
 
@@ -172,15 +184,19 @@ class neural_network(object):
     def __init__(self,sizes):
         assert((isinstance(sizes, list) or isinstance(sizes,np.array)) and 'sizes needs to be a numpy array')
         self.sizes = sizes
-        self.biases = [(np.random.randn(y,1) for y in sizes[1:])] # no biases for input layer
-        self.weights = [(np.np.random.randn(y,x) for x,y in zip(sizes[:-1],sizes[1:]))] #weights matrix for layers
+        '''
+        #self.biases = [(np.random.randn(y,1) for y in sizes[1:])] # no biases for input layer
+        #self.weights = [(np.random.randn(y,x) for x,y in zip(sizes[:-1],sizes[1:]))] #weights matrix for layers
         #the above line indexs over lists [all sizes except last] and [all sizes except first], to create 
         # matrices of layer by nextlayer
-        print(f'{self.biases = }')
-        print(f'{list(self.weights) = }')
-
-    def forward(self,input):
-        for b,w in zip(self.biases,self.weights):
+        '''
+        self.biases = bias_generator(sizes)
+        self.weights = weight_generator(sizes) #REMEMBER FOR LATER: mXn * nXp = mXp
+        
+    def forward(self,input): #need this funciton for later, not for backprop
+        b_w_zipper = zip(self.biases,self.weights)
+        print(f'{b_w_zipper = }')
+        for b,w in b_w_zipper:
             input = neural_network.sigmoid(np.dot(w,input)+b)
             #dot product is [1,2]dot[3,4] = sum[a_i * b_i] = 3+8 = 11
         return input
