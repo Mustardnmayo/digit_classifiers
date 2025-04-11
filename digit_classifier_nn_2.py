@@ -161,14 +161,14 @@ def bias_generator(sizes):
         if index == 0:
             continue
         biases.append(np.random.randn(layer_len))
-    print(f'shapes of bias vectors \n\t{str([b.shape for b in biases ])}\n')
+    #print(f'shapes of bias vectors \n\t{str([b.shape for b in biases ])}\n')
     return biases
 
 def weight_generator(sizes):
     weights = []
     for x,y in zip(sizes[:-1], sizes[1:]):
         weights.append(np.random.randn(x,y))
-    print(f'shapes of weight matrices:\n\t{str([w.shape for w in weights ])}\n')
+    #print(f'shapes of weight matrices:\n\t{str([w.shape for w in weights ])}\n')
     return weights
 
 class neural_network(object):
@@ -195,29 +195,38 @@ class neural_network(object):
         self.biases = bias_generator(sizes)
         self.weights = weight_generator(sizes) #REMEMBER FOR LATER: mn * np = mp
         
-    def forward(self,input): #need this funciton for later, not for backprop
+    def forward(self,input): #need this funciton for later(and testing), not for backprop
         assert(input.shape == (1,784))    
         for layer in range(len(self.sizes)-1):
             b = self.biases[layer]
-            print(f'{b.shape = }')
+            #print(f'{b.shape = }')
             w = self.weights[layer]
-            print(f'{w.shape = }')
+            #print(f'{w.shape = }')
             print(f'operation: ({input.shape} dot {w.shape}) + {b.shape}')
             input = neural_network.sigmoid(np.dot(input,w)+b)
-            print(f'{input.shape = }')
+            #print(f'{input.shape = }')
         
         return input
     
-    def SGD(self,training_data,mini_batch_size,epochs,eta):
-        for i in range(epochs):
-            np.random.shuffle(training_data)
-            pass
+    def back_prop(self,batch,learning_rate):
+        
+        pass
 
+    def SDG(self,training_dataset,epochs,batch_size,learning_rate):
+        data_indexing_range = range(0,len(training_dataset),batch_size)
+        batches = [] #list of batches, each batch contains n training examples
+        for i in range(epochs-1):
+            print(f'starting epoch {i+1} out of {epochs}')
+            training_data = np.random.shuffle(training_dataset)
+            batches.append(training_data[data_indexing_range[i]:data_indexing_range[i+1]])
 
-            print(f'epoch {i} completed, loss is: ...')
+        for batch in batches:
+            self.back_prop(batch,learning_rate)
+            
 
+    
     @staticmethod
-    def cost_derivative(output_activations,y):
+    def cost_derivative(output_activations,y): #idk whats up w/ this one
         return (output_activations-y)
 
     def testing(self,testing_data,batch_size):
