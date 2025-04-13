@@ -1,7 +1,7 @@
 from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader
 import numpy as np
-
+import time 
 
 def normalize(images):
     # make the data in the range [0,1]
@@ -226,15 +226,21 @@ class neural_network(object):
 
     
     @staticmethod
-    def cost_derivative(output_activations,y): #idk whats up w/ this one
-        return (output_activations-y)
+    def cost_derivative(output_activations,expected_activations):
+        pass
+    
 
     def testing(self,testing_data,batch_size):
         pass
-
+#--------------------------------------------------------------------------------------
+start = time.time()
 
 network = neural_network([28*28,128,32,10])
 a = train_data[0][0]
 #print(f'{a = }')
+
 a = network.forward(np.array(train_data[0][0]).reshape((1,784)))
 print(f'{a.shape = }\n {a = }')
+
+
+print(f'total time taken: {time.time()- start}')
