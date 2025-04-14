@@ -47,9 +47,9 @@ def vector_average(list_of_vectors):
 def probabilitificator(labels):
     new_labels = []
     for label in labels:
-        new_label = np.zeros(10,dtype=np.int8)
-        new_label[label] = 1
-        new_labels.append((new_label,label))
+        new_label = np.zeros(10,dtype=np.float64)
+        new_label[label] = 1.0
+        new_labels.append(new_label)
     return new_labels
 
 
@@ -64,13 +64,17 @@ train_labels = train_dataset.targets.numpy()
 train_images_flattened = np.array(train_images).reshape(len(train_images),-1)
 #print(f'{train_images_flattened[0].shape = }\n{train_images_flattened[0] = }')
 
-
 train_images_flattened_normalized = normalize(train_images_flattened)
 
 train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
-#data is stored: (image,(labels_probability_vector,number))
+#list of tuples, (image,labels_probability_vector)
 
-print(f'{train_data[0] = }')
+test_images = test_dataset.data.numpy()
+test_labels = test_dataset.targets.numpy()
+
+test_images_flattened_normalized = normalize(np.array(test_images.reshape(len(test_images),-1)))
+test_data = list(zip(test_images_flattened_normalized,probabilitificator(test_labels))
+)
 
 '''
 class neural_network(object): #make this work (duh)
@@ -202,48 +206,78 @@ class neural_network(object):
             #print(f'{b.shape = }')
             w = self.weights[layer]
             #print(f'{w.shape = }')
-            print(f'operation: ({input.shape} dot {w.shape}) + {b.shape}')
+            #print(f'operation: ({input.shape} dot {w.shape}) + {b.shape}')
             input = neural_network.sigmoid(np.dot(input,w)+b)
             #print(f'{input.shape = }')
         
         return input
     
-    def back_prop(self,batch,learning_rate):
-        z = np.array([])# gonna be a list of matrices
-        for training_example in batch:
-            image = training_example[1]
-            
+    def update_batch(self,batch,learning_rate):
+        nabla_b = [np.empty(b.shape) for b in self.biases]
+        nabla_w = [np.empty(w.shape) for w in self.biases]
+
+        for image,label in batch:
+            delta_nabla_b,delta_nabla_w = self.back_prop(image,label)
+            nabla_b = [nb+dnb for nb,dnb in zip(nabla_b, delta_nabla_b)]
+            nabla_w = [nw+dnw for nw,dnw in zip(nabla_w, delta_nabla_w)]
+
+        eta_bar = learning_rate/len(batch)
+        self.weights = [w-eta_bar*nw for w,nw in zip(self.weights,nabla_w)]
+        self.biases = [b-eta_bar*nb for b,nb in zip(self.biases,nabla_b)]
+
+    def back_prop(self,image,label):
+        nabla_b = [np.empty(b.shape) for b in self.biases]
+        nabla_w = [np.empty(w.shape) for w in self.biases]
+
+        activation = image
+        activations = [activation]
+
+        zs = [] #weighted inputs
+        for b,w in zip(self.biases,self.weights):
+            z = np.dot(activation,w)+b
+            zs.append(z)
+            activation = neural_network.sigmoid(z)
+            activations.append(activation)
+        #backwards pass
+        #first layer
+        error = neural_network.cost_derivative(activations[-1],label) * neural_network.sigmoid(zs[-1],derivative=True)
         
+        nabla_b[-1] = error #i get why you wouldnt typically call this error, but you cant stop me
+        nabla_w[-1] = np.dot(error,np.transpose(activations[-2]))
+
+        for layer in range(2,len(self.sizes)):
+            z = zs[-layer]
+            sp = neural_network.sigmoid(z,derivative=True)
+            error = np.dot(np.transpose(self.weights[-layer+1]),error) * sp
+
+            nabla_b[-layer] = error 
+            nabla_w[-layer] = np.dot(error,np.transpose(-layer-1))
+
+        return (nabla_b,nabla_w)
 
     def SDG(self,training_dataset,epochs,batch_size,learning_rate):
-        data_indexing_range = range(0,len(training_dataset),batch_size)
-        batches = [] #list of batches, each batch contains n training examples
-        for i in range(epochs-1):
-            print(f'starting epoch {i+1} out of {epochs}')
-            training_data = np.random.shuffle(training_dataset)
-            batches.append(training_data[data_indexing_range[i]:data_indexing_range[i+1]])
+        for i in range(epochs-1): #an epoch is the entire dataset
+            np.random.shuffle(training_dataset)
+            batches = [training_dataset[k:k+batch_size] for k in range(0,len(train_dataset),batch_size)]
+            for batch in batches:
+                self.update_batch(batch,learning_rate)
+            print(f'completed epoch {i+1} out of {epochs}')
 
-        for batch in batches:
-            self.back_prop(batch,learning_rate)
-            
-
-    
     @staticmethod
-    def cross_entropy_cost(output_activations,expected_activation): # this is not a general function, it is specific to this case
-        output_activations = np.transpose(output_activations)
-        return np.float16(np.log(output_activations[expected_activation-1]))
+    def cost_derivative(output_activations,expected_activations):
+        return (output_activations-expected_activations)
     
-    def testing(self,testing_data,batch_size):
-        pass
+
+    def testing(self,test_data):
+        test_results = [(np.argmax(self.forward(image)),label) for image,label in test_data]
+        return sum(int(x==y) for x,y in test_results)
 #--------------------------------------------------------------------------------------
 start = time.time()
 
 network = neural_network([28*28,128,32,10])
-a = train_data[0][0]
-#print(f'{a = }')
-
-a = network.forward(np.array(train_data[0][0]).reshape((1,784)))
-print(f'{a.shape = }\n {a = } \n loss:{neural_network.cross_entropy_cost(a,train_data[0][1][1])}')
+#training
+network.SDG(train_data,5,10,0.01)
+network.testing(test_data)
 
 
-print(f'total time taken: {time.time()- start}')
+print(f'total time taken: {time.time()- start}s')
