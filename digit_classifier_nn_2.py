@@ -68,9 +68,9 @@ train_images_flattened = np.array(train_images).reshape(len(train_images),-1)
 train_images_flattened_normalized = normalize(train_images_flattened)
 
 train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
-#list of tuples, (image,labels_probability_vector)
+#data is stored: (image,(labels_probability_vector,number))
 
-#print(f'{train_data[0] = }')
+print(f'{train_data[0] = }')
 
 '''
 class neural_network(object): #make this work (duh)
@@ -209,8 +209,11 @@ class neural_network(object):
         return input
     
     def back_prop(self,batch,learning_rate):
+        z = np.array([])# gonna be a list of matrices
+        for training_example in batch:
+            image = training_example[1]
+            
         
-        pass
 
     def SDG(self,training_dataset,epochs,batch_size,learning_rate):
         data_indexing_range = range(0,len(training_dataset),batch_size)
@@ -226,10 +229,10 @@ class neural_network(object):
 
     
     @staticmethod
-    def cost_derivative(output_activations,expected_activations):
-        pass
+    def cross_entropy_cost(output_activations,expected_activation): # this is not a general function, it is specific to this case
+        output_activations = np.transpose(output_activations)
+        return np.float16(np.log(output_activations[expected_activation-1]))
     
-
     def testing(self,testing_data,batch_size):
         pass
 #--------------------------------------------------------------------------------------
@@ -240,7 +243,7 @@ a = train_data[0][0]
 #print(f'{a = }')
 
 a = network.forward(np.array(train_data[0][0]).reshape((1,784)))
-print(f'{a.shape = }\n {a = }')
+print(f'{a.shape = }\n {a = } \n loss:{neural_network.cross_entropy_cost(a,train_data[0][1][1])}')
 
 
 print(f'total time taken: {time.time()- start}')
