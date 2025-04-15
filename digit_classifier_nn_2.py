@@ -2,15 +2,16 @@ from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader
 import numpy as np
 import time 
+import json
 
-def normalize(images):
+'''def normalize(images):
     # make the data in the range [0,1]
     # hard coded 0-255 because i can
     images = np.array(images) #ensure its a np array to use np vector operations
     images = images/255.0
     #images = 2*images -1
     return images
-
+'''
 '''
 def vector_average(list_of_vectors):
     #averager function takes in list returns float average
@@ -37,45 +38,48 @@ def vector_average(list_of_vectors):
 
     return sum_vector
 '''
-
-def vector_average(list_of_vectors):
-    list_of_vectors = np.array(list_of_vectors) #to be safe
-    for vector in list_of_vectors:
-        assert((len(vector) != len(list_of_vectors[0])) and f"Not all vectors are the same length \n vector_average {len(list_of_vectors[0])} != {len(vector) = } at index {list_of_vectors.index(vector)}")
-    return np.mean(list_of_vectors,0)
-
+'''
 def probabilitificator(labels):
     new_labels = []
     for label in labels:
-        new_label = np.zeros(10,dtype=np.float64)
+        new_label = np.zeros((10,1),dtype=np.float64)
         new_label[label] = 1.0
         new_labels.append(new_label)
     return new_labels
+'''
+#-----------------------------------------------------|getting the data|---------------------------------------------------------------
+with open('Mnist_data.json','r') as file:
+    data = json.load(file)
+train_data = list([(np.array(image),np.array(label)) for image,label in data['train']])
+test_data = list([(np.array(image),np.array(label)) for image,label in data['test']])
 
+print(f'{train_data[0] = }') # testing
 
-#-----------------------------------------------------THE FUNCTION LINE---------------------------------------------------------------
+'''
+def load_data():
+    train_dataset = MNIST(root = './data',train=True,download=True)
+    test_dataset = MNIST(root = './data',train=False,download=True)
 
-train_dataset = MNIST(root = './data',train=True,download=True)
-test_dataset = MNIST(root = './data',train=False,download=True)
+    train_images = train_dataset.data.numpy()
+    train_labels = train_dataset.targets.numpy()
 
-train_images = train_dataset.data.numpy()
-train_labels = train_dataset.targets.numpy()
+    train_images_flattened = np.array(train_images).reshape(len(train_images),-1)
+    #print(f'{train_images_flattened[0].shape = }\n{train_images_flattened[0] = }')
 
-train_images_flattened = np.array(train_images).reshape(len(train_images),-1)
-#print(f'{train_images_flattened[0].shape = }\n{train_images_flattened[0] = }')
+    train_images_flattened_normalized = normalize(train_images_flattened)
 
-train_images_flattened_normalized = normalize(train_images_flattened)
+    train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
+    #list of tuples, (image,labels_probability_vector)
 
-train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
-#list of tuples, (image,labels_probability_vector)
+    test_images = test_dataset.data.numpy()
+    test_labels = test_dataset.targets.numpy()
 
-test_images = test_dataset.data.numpy()
-test_labels = test_dataset.targets.numpy()
-
-test_images_flattened_normalized = normalize(np.array(test_images.reshape(len(test_images),-1)))
-test_data = list(zip(test_images_flattened_normalized,probabilitificator(test_labels))
-)
-
+    test_images_flattened_normalized = normalize(np.array(test_images.reshape(len(test_images),-1)))
+    test_data = list(zip(test_images_flattened_normalized,probabilitificator(test_labels)))
+    return train_data,test_data
+train_data,test_data = load_data()
+'''
+#------------------------------------------------------LE DATA LOADER-----------------------------------------------------------------
 '''
 class neural_network(object): #make this work (duh)
     def __init__(self,input_layer,output,hidden_layers=np.array([])): #hidden_layers is a list of lengths
@@ -159,6 +163,7 @@ class neural_network(object): #make this work (duh)
 net = neural_network((28*28),10,np.array([128,32]))
 print(f'{net = }')
 '''
+#-----------------------------------------------------^the shitty class^-----------------------------------------------------
 def bias_generator(sizes):
     biases = []
     for index,layer_len in enumerate(sizes):
@@ -213,8 +218,8 @@ class neural_network(object):
         return input
     
     def update_batch(self,batch,learning_rate):
-        nabla_b = [np.empty(b.shape) for b in self.biases]
-        nabla_w = [np.empty(w.shape) for w in self.biases]
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.biases]
 
         for image,label in batch:
             delta_nabla_b,delta_nabla_w = self.back_prop(image,label)
@@ -226,8 +231,8 @@ class neural_network(object):
         self.biases = [b-eta_bar*nb for b,nb in zip(self.biases,nabla_b)]
 
     def back_prop(self,image,label):
-        nabla_b = [np.empty(b.shape) for b in self.biases]
-        nabla_w = [np.empty(w.shape) for w in self.biases]
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        nabla_w = [np.zeros(w.shape) for w in self.biases]
 
         activation = image
         activations = [activation]
@@ -238,11 +243,16 @@ class neural_network(object):
             zs.append(z)
             activation = neural_network.sigmoid(z)
             activations.append(activation)
+        print(f'activation shapes:')
+        for a in activations:
+            print(f'\t{a.shape}')
         #backwards pass
         #first layer
         error = neural_network.cost_derivative(activations[-1],label) * neural_network.sigmoid(zs[-1],derivative=True)
         
-        nabla_b[-1] = error #i get why you wouldnt typically call this error, but you cant stop me
+        #i get why you wouldnt typically call this error, but you cant stop me
+        nabla_b[-1] = error
+        print(f'error shape:{error.shape} | transposed activations[-2] {np.transpose(activations[-2]).shape}')
         nabla_w[-1] = np.dot(error,np.transpose(activations[-2]))
 
         for layer in range(2,len(self.sizes)):
@@ -258,7 +268,9 @@ class neural_network(object):
     def SDG(self,training_dataset,epochs,batch_size,learning_rate):
         for i in range(epochs-1): #an epoch is the entire dataset
             np.random.shuffle(training_dataset)
-            batches = [training_dataset[k:k+batch_size] for k in range(0,len(train_dataset),batch_size)]
+            ra = range(0,len(training_dataset),batch_size)
+            print(list(ra))
+            batches = [training_dataset[k:k+batch_size] for k in ra]
             for batch in batches:
                 self.update_batch(batch,learning_rate)
             print(f'completed epoch {i+1} out of {epochs}')
@@ -266,7 +278,6 @@ class neural_network(object):
     @staticmethod
     def cost_derivative(output_activations,expected_activations):
         return (output_activations-expected_activations)
-    
 
     def testing(self,test_data):
         test_results = [(np.argmax(self.forward(image)),label) for image,label in test_data]
@@ -276,7 +287,7 @@ start = time.time()
 
 network = neural_network([28*28,128,32,10])
 #training
-network.SDG(train_data,5,10,0.01)
+network.SDG(train_data,5,64,0.01)
 network.testing(test_data)
 
 
