@@ -2,7 +2,7 @@ from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader
 import numpy as np
 import time 
-import json
+
 
 '''def normalize(images):
     # make the data in the range [0,1]
@@ -48,121 +48,13 @@ def probabilitificator(labels):
     return new_labels
 '''
 #-----------------------------------------------------|getting the data|---------------------------------------------------------------
-with open('Mnist_data.json','r') as file:
-    data = json.load(file)
-train_data = list([(np.array(image),np.array(label)) for image,label in data['train']])
-test_data = list([(np.array(image),np.array(label)) for image,label in data['test']])
-
-print(f'{train_data[0] = }') # testing
-
-'''
-def load_data():
-    train_dataset = MNIST(root = './data',train=True,download=True)
-    test_dataset = MNIST(root = './data',train=False,download=True)
-
-    train_images = train_dataset.data.numpy()
-    train_labels = train_dataset.targets.numpy()
-
-    train_images_flattened = np.array(train_images).reshape(len(train_images),-1)
-    #print(f'{train_images_flattened[0].shape = }\n{train_images_flattened[0] = }')
-
-    train_images_flattened_normalized = normalize(train_images_flattened)
-
-    train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
-    #list of tuples, (image,labels_probability_vector)
-
-    test_images = test_dataset.data.numpy()
-    test_labels = test_dataset.targets.numpy()
-
-    test_images_flattened_normalized = normalize(np.array(test_images.reshape(len(test_images),-1)))
-    test_data = list(zip(test_images_flattened_normalized,probabilitificator(test_labels)))
-    return train_data,test_data
-train_data,test_data = load_data()
-'''
-#------------------------------------------------------LE DATA LOADER-----------------------------------------------------------------
-'''
-class neural_network(object): #make this work (duh)
-    def __init__(self,input_layer,output,hidden_layers=np.array([])): #hidden_layers is a list of lengths
-
-        self.input_layer = input_layer
-
-        self.hidden_layers = hidden_layers
-        
-        self.output = output
-
-        self.layers = np.array([]) #(will be) an array of lengths
-
-        np.append(self.layers,input_layer)
-
-        for L in self.hidden_layers:
-            np.append(self.layers,L)
-
-        np.append(self.layers, output)
-
-        print(f'{self.layers = }')
-
-        self.layers_linalg = np.array([]) # this is the list that actually contains all the layers
-
-        for layer in self.layers:
-            np.append(self.layers_linalg,neural_network.layer.__init__(self,len(layer),layer))
+data = np.load('Mnist_data.npz',allow_pickle=True)
+train_data = list(zip(data['train_images'],data['train_labels']))
+test_data = list(zip(data['test_images'],data['test_labels']))
+#testing
+#print(f'{train_data[0] = }\n{test_data[0] = }')
 
 
-        def forward(self):
-            for i in range(len(self.layers_linalg)-1):
-                neural_network.layer.forward(self.layers_linalg[i],self.layers_linalg[i+1])
-
-
-        def __str__(self):
-            ret = f'a neural network with an input layer of {self.layers[0]}\n'
-            ret += f'and hidden layers of {str([l for l in self.layers[1:-2]])}\n'
-            ret += f'and an output layer of {self.layers[-1]}\n'
-            ret += f'layers :\n'
-            ret += f'{str([str(l) + '\n' for l in self.layers])}\n'
-            return ret
-#-------------------------------------------------THE NETWORK LINE-------------------------------------------------------
-    class layer(object):
-        def __init__(self,network,layer_id,neurons):
-            self.network = network
-            self.layer_id = layer_id
-
-            self.neurons = np.array([])
-            for index in range(neurons):
-                np.append(self.neurons,neural_network.neuron.__init__(self.network,self.layer_id))
-
-        @staticmethod
-        def forward(first_layer, second_layer):
-            print(f'forwarding from layer {first_layer.layer_id} to layer {second_layer.layer_id}')
-            print(first_layer)
-            print(second_layer)
-            
-
-        def __str__(self):
-            ret = f'layer: {self.layer_id = } \n in network: {self.network = } \n with {len(self.neurons)} neurons'
-#----------------------------------------------THE LAYER LINE------------------------------------------------------------
-    class neuron(object):
-        def __init__(self,network,layer,weight=None,bias=None):
-            self.network = network
-            self.layer = layer   
-            #random initalization
-            if not weight:
-                pass
-            else:
-                self.weight = weight
-            if not bias:
-                pass
-            else:
-                self.bias = bias
-
-        def __str__(self):
-            ret = f'neuron in {self.network = } \n {self.layer = } \n {self.weight = } \n {self.bias = }'
-            return ret
-#----------------------------------------------THE NEURON LINE----------------------------------------------
-
-
-
-net = neural_network((28*28),10,np.array([128,32]))
-print(f'{net = }')
-'''
 #-----------------------------------------------------^the shitty class^-----------------------------------------------------
 def bias_generator(sizes):
     biases = []
