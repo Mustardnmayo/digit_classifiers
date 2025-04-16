@@ -1,7 +1,6 @@
 from torchvision.datasets import MNIST
 from torch.utils.data import DataLoader
 import numpy as np
-import json
 
 def probabilitificator(labels):
     new_labels = []
@@ -32,19 +31,32 @@ train_images_flattened = np.array(train_images).reshape(len(train_images),-1)
 
 train_images_flattened_normalized = normalize(train_images_flattened)
 
-train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
+#train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
 #list of tuples, (image,labels_probability_vector)
 
 test_images = test_dataset.data.numpy()
 test_labels = test_dataset.targets.numpy()
 
 test_images_flattened_normalized = normalize(np.array(test_images.reshape(len(test_images),-1)))
-test_data = list(zip(test_images_flattened_normalized,probabilitificator(test_labels)))
+#test_data = list(zip(test_images_flattened_normalized,probabilitificator(test_labels)))
 
+#for convertint it to .npz
+train_images, train_labels = train_images_flattened_normalized, probabilitificator(train_labels)
+
+test_images,test_labels = test_images_flattened_normalized, probabilitificator(test_labels)
+
+raise ZeroDivisionError
+np.savez_compressed('Mnist_data.npz',
+                    train_images=train_images,
+                    train_labels=train_labels,
+                    
+                    test_images=test_images,
+                    test_labels=test_labels)
+
+print(f'wrote data successfully to .npz')
+
+'''
 #convert the data to json seralizable data
-train_data_seralizable = [(image.tolist(),label.tolist()) for image,label in train_data]
-test_data_seralizable = [(image.tolist(),label.tolist()) for image,label in test_data]
-
 try:
     raise ZeroDivisionError
     file = open(r'Mnist_data.json','w')
@@ -55,3 +67,4 @@ try:
     print(f'dumped data successfuly')
 except Exception as e:  
     print(f'failed:\n{e}')
+'''
