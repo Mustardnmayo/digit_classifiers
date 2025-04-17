@@ -3,50 +3,11 @@ from torch.utils.data import DataLoader
 import numpy as np
 import time 
 
+from Mnist_data_loader import Load_data
 
-'''def normalize(images):
-    # make the data in the range [0,1]
-    # hard coded 0-255 because i can
-    images = np.array(images) #ensure its a np array to use np vector operations
-    images = images/255.0
-    #images = 2*images -1
-    return images
-'''
-'''
-def vector_average(list_of_vectors):
-    #averager function takes in list returns float average
-    def average(list):
-        a = 0
-        for element in list:
-            a += element
-        return a/len(list)
+Load_data()
 
-    #check that all vectors are the same length:
-    length = len(list_of_vectors[0])
-    for v in range(0,len(list_of_vectors)):
-        assert((len(list_of_vectors[v]) != length) and f"Not all vectors are the same length vector_average {length} != {len(list_of_vectors[v]) = } at index {v}")
-    
-    sum_vector = np.empty(length)
-    assert(len(sum_vector) == len(list_of_vectors[0]))
-    
-    storage = np.empty(len(list_of_vectors))
-    for index in len(0,list_of_vectors):
-        for vector in list_of_vectors:
-            np.append(storage, vector[index])
-        sum_vector[index] =  average(storage))
-        storage = np.empty(len(list_of_vectors))
 
-    return sum_vector
-'''
-'''
-def probabilitificator(labels):
-    new_labels = []
-    for label in labels:
-        new_label = np.zeros((10,1),dtype=np.float64)
-        new_label[label] = 1.0
-        new_labels.append(new_label)
-    return new_labels
-'''
 #-----------------------------------------------------|getting the data|---------------------------------------------------------------
 data = np.load('Mnist_data.npz',allow_pickle=True)
 train_data = list(zip(data['train_images'],data['train_labels']))
@@ -54,26 +15,38 @@ test_data = list(zip(data['test_images'],data['test_labels']))
 #testing
 #print(f'{train_data[0] = }\n{test_data[0] = }')
 
+class CrossEntropyCost(object):
+    @staticmethod
+    def fn(a,y):
+        '''
+        returns cost of output a for desiered output y
+        '''
+        return np.sum(np.nan_to_num(-y*np.log(a)-(1-y)*np.log(1-a)))
+    
+    def delta(a,y):
+        '''
+        returns the error delta from the output layer
+        '''
+        return(a-y)
 
-#-----------------------------------------------------^the shitty class^-----------------------------------------------------
+#-----------------------------------------------------^the cost class^-----------------------------------------------------
 def bias_generator(sizes):
     biases = []
     for index,layer_len in enumerate(sizes):
         if index == 0:
             continue
         biases.append(np.random.randn(layer_len))
-    #print(f'shapes of bias vectors \n\t{str([b.shape for b in biases ])}\n')
+    print(f'shapes of bias vectors: \n\t{str([b.shape for b in biases ])}\n')
     return biases
 
 def weight_generator(sizes):
     weights = []
     for x,y in zip(sizes[:-1], sizes[1:]):
         weights.append(np.random.randn(x,y))
-    #print(f'shapes of weight matrices:\n\t{str([w.shape for w in weights ])}\n')
+    print(f'shapes of weight matrices:\n\t{str([w.shape for w in weights ])}\n')
     return weights
 
 class neural_network(object):
-
     @staticmethod
     def sigmoid(z,derivative=False):
         # this will work w/ np arrays
@@ -84,7 +57,10 @@ class neural_network(object):
         return 1/(1 + np.exp(-z))
     
 
-    def __init__(self,sizes):
+    def __init__(self,sizes,cost_function):
+        assert(cost_function.delta)
+        self.cost = cost_function
+
         assert((isinstance(sizes, list) or isinstance(sizes,np.array)) and 'sizes needs to be a numpy array')
         self.sizes = sizes
         '''
@@ -123,6 +99,29 @@ class neural_network(object):
         self.biases = [b-eta_bar*nb for b,nb in zip(self.biases,nabla_b)]
 
     def back_prop(self,image,label):
+        #first we need to make lists of:
+        #the error of each layer
+        #the activations of each layer
+        weighted_sums = np.array([])
+        
+        current_activation = image
+        activations = np.array([current_activation])
+
+        for biases,weights in zip(self.biases,self.weights):
+            #calculate z
+            weighted_sum = np.dot(current_activation,weights)+biases
+            current_activation = neural_network.sigmoid(weighted_sum)
+            weighted_sums = np.append(weighted_sums,weighted_sum)
+            activations = np.append(activations,current_activation)
+
+        print(f'{weighted_sums.ndim = } {weighted_sums[0] = }    \n  {activations.ndim = } {activations[0] = }')
+        # 
+
+
+        return None
+
+
+    '''def back_prop(self,image,label):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.biases]
 
@@ -144,32 +143,31 @@ class neural_network(object):
         
         #i get why you wouldnt typically call this error, but you cant stop me
         nabla_b[-1] = error
-        print(f'error shape:{error.shape} | transposed activations[-2] {np.transpose(activations[-2]).shape}')
-        nabla_w[-1] = np.dot(error,np.transpose(activations[-2]))
+        print(f'error shape:{error.shape} | transposed activations[-1] {np.transpose(activations[-1]).shape}')
+        nabla_w[-1] = np.dot(error,np.transpose(activations[-1])) # -1 in activations should be -2
 
         for layer in range(2,len(self.sizes)):
             z = zs[-layer]
             sp = neural_network.sigmoid(z,derivative=True)
-            error = np.dot(np.transpose(self.weights[-layer+1]),error) * sp
+            #error = np.dot(np.transpose(self.weights[-layer+1]),error) * sp
+            error = np.dot(error,np.transpose(self.weights[-layer+1])) *sp
 
             nabla_b[-layer] = error 
             nabla_w[-layer] = np.dot(error,np.transpose(-layer-1))
 
-        return (nabla_b,nabla_w)
+        return (nabla_b,nabla_w)'''
 
     def SDG(self,training_dataset,epochs,batch_size,learning_rate):
         for i in range(epochs-1): #an epoch is the entire dataset
+            print(f'starting epoch {i}')
             np.random.shuffle(training_dataset)
             ra = range(0,len(training_dataset),batch_size)
-            print(list(ra))
+            #print(list(ra))
             batches = [training_dataset[k:k+batch_size] for k in ra]
             for batch in batches:
                 self.update_batch(batch,learning_rate)
             print(f'completed epoch {i+1} out of {epochs}')
 
-    @staticmethod
-    def cost_derivative(output_activations,expected_activations):
-        return (output_activations-expected_activations)
 
     def testing(self,test_data):
         test_results = [(np.argmax(self.forward(image)),label) for image,label in test_data]
@@ -177,7 +175,7 @@ class neural_network(object):
 #--------------------------------------------------------------------------------------
 start = time.time()
 
-network = neural_network([28*28,128,32,10])
+network = neural_network([28*28,128,32,10],CrossEntropyCost)
 #training
 network.SDG(train_data,5,64,0.01)
 network.testing(test_data)
