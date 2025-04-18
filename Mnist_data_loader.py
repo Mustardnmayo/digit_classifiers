@@ -61,7 +61,7 @@ def Load_data():
     from os import path
 
     if path.exists("Mnist_data.npz"):
-        print(f'Mnist_data file already exists, not doing anything')
+        print(f'Mnist_data file already exists => not doing anything')
     else:
         try:
             make_Mnist_data_file()
