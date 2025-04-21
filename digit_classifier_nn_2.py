@@ -103,18 +103,6 @@ class neural_network(object):
         self.biases = bias_generator(sizes)
         self.weights = weight_generator(sizes) #REMEMBER FOR LATER: mn * np = mp
         
-    def forward(self,input): #need this funciton for later(and testing), not for backprop
-        assert(input.shape == (1,784))    
-        for layer in range(len(self.sizes)-1):
-            b = self.biases[layer]
-            #print(f'{b.shape = }')
-            w = self.weights[layer]
-            #print(f'{w.shape = }')
-            #print(f'operation: ({input.shape} dot {w.shape}) + {b.shape}')
-            input = neural_network.sigmoid(safe_dot(input,w)+b)
-            #print(f'{input.shape = }')
-        
-        return input
     
     def update_batch(self,batch,learning_rate):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
@@ -168,8 +156,6 @@ class neural_network(object):
             nabla_w[-l] = safe_dot(delta,activations[-l-1].T)
         return (nabla_b,nabla_w)
 
-
-
     '''def back_prop(self,image,label):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.biases]
@@ -216,17 +202,27 @@ class neural_network(object):
             for batch in batches:
                 self.update_batch(batch,learning_rate)
             print(f'completed epoch {i+1} out of {epochs}')
+            print(f'accuracy is {self.testing(test_data)}%')
 
+    def forward(self,input): #need this funciton for later(and testing), not for backprop
+        current_activation = input.reshape(-1,1)
+        #print(f'{current_activation.shape = }')
+        for biases,weights in zip(self.biases,self.weights):
+            current_activation = neural_network.sigmoid(safe_dot(weights,current_activation) + biases)
+        return current_activation
 
     def testing(self,test_data):
-        test_results = [(np.argmax(self.forward(image)),label) for image,label in test_data]
-        return sum(int(x==y) for x,y in test_results)
+        test_results = [
+            (np.argmax(self.forward(image)),np.argmax(label))
+              for image,label in test_data]
+        return sum(int(x==y) for x,y in test_results)*100 / len(test_data)
 #--------------------------------------------------------------------------------------
 start = time.time()
 
-network = neural_network([28*28,128,32,10],CrossEntropyCost)
+network = neural_network([28*28,256,64,32,10],CrossEntropyCost)
 #training
-network.SDG(train_data,5,64,0.01)
-network.testing(test_data)
+network.SDG(train_data,10,64,0.01)
+accuracy = network.testing(test_data)
+print(f'accuracy = {accuracy:.3f}%')
 
-print(f'total time taken: {time.time()- start}s')
+print(f'total time taken: {(time.time()- start):.3f}s')
