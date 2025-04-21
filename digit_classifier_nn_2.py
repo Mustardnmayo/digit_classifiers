@@ -9,10 +9,10 @@ def enforce_float32(func):
     def wrapper(*args,**kwargs):
         result = func(*args,**kwargs)
         if isinstance(result,np.ndarray) and result.dtype != np.float32:
-            print(f'function {func.__name__} return {result.dtype}, auto casting to np.float32')
+            #print(f'function {func.__name__} return {result.dtype}, auto casting to np.float32')
             return result.astype(np.float32)
         elif isinstance(result,float) and type(result) != np.float32:
-            print(f'function {func.__name__} return a python float(64), auto casting to np.float32')
+            #print(f'function {func.__name__} return a python float(64), auto casting to np.float32')
             return result.astype(np.float32)
         return result
     return wrapper
@@ -66,7 +66,7 @@ def bias_generator(sizes):
     for index,layer_len in enumerate(sizes):
         if index == 0:
             continue
-        biases.append(safe_randn(layer_len))
+        biases.append(safe_randn(layer_len).reshape(-1,1))
     print(f'shapes of bias vectors: \n\t{str([b.shape for b in biases ])}\n')
     return biases
 
@@ -136,20 +136,18 @@ class neural_network(object):
         #the error of each layer
         #the activations of each layer
         weighted_sums = []
+        current_activation = image.reshape(-1,1)
+        #print(f'{current_activation.shape = } (should be (784,1))')
         
-        current_activation = image
-
         activations = [current_activation]
-
 
         for biases,weights in zip(self.biases,self.weights):
             #calculate z
-            z = safe_dot(weights,current_activation)+biases
-
+            z = safe_dot(weights,current_activation) + biases
             current_activation = neural_network.sigmoid(z) #forward data
 
             weighted_sums.append(z)
-            activations.append(current_activation.reshape(-1,1))
+            activations.append(current_activation)
 
         #backwards pass
         #first layer
@@ -158,14 +156,14 @@ class neural_network(object):
         nabla_b[-1] = delta
         nabla_w[-1] = safe_dot(delta,activations[-2].T)
 
-
         for l in range(2,len(self.sizes)):
             z = weighted_sums[-l]
             sp = neural_network.sigmoid(z,derivative=True)
-            print(f'{self.weights[-l+1].T.shape = }\n{delta.shape = }')
+            #print(f'{sp.shape = }')
+            #print(f'{self.weights[-l+1].T.shape = }\n{delta.shape = }')
             delta = safe_dot(self.weights[-l+1].T,delta) * sp
 
-            print(f'{delta.shape = } \n{activations[-l-1].T.shape = }')
+            #print(f'{delta.shape = } \n{activations[-l-1].T.shape = }')
             nabla_b[-l] = delta
             nabla_w[-l] = safe_dot(delta,activations[-l-1].T)
         return (nabla_b,nabla_w)
@@ -210,7 +208,7 @@ class neural_network(object):
 
     def SDG(self,training_dataset,epochs,batch_size,learning_rate):
         for i in range(epochs-1): #an epoch is the entire dataset
-            print(f'starting epoch {i}')
+            print(f'starting epoch {i+1}')
             np.random.shuffle(training_dataset)
             ra = range(0,len(training_dataset),batch_size)
             #print(list(ra))
@@ -230,6 +228,5 @@ network = neural_network([28*28,128,32,10],CrossEntropyCost)
 #training
 network.SDG(train_data,5,64,0.01)
 network.testing(test_data)
-
 
 print(f'total time taken: {time.time()- start}s')
