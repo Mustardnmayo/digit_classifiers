@@ -4,7 +4,6 @@ import time
 
 
 #in this project we are using np.float32 because my computer is not a 'powerhouse', and I want to attempt to be effecient
-#chat gpt wrote this function, but I do atleast understand it
 def enforce_float32(func):
     def wrapper(*args,**kwargs):
         result = func(*args,**kwargs)
@@ -43,8 +42,6 @@ train_data = list(zip(data['train_images'],data['train_labels']))
 test_data = list(zip(data['test_images'],data['test_labels']))
 print(f'{len(train_data) = } | image, label lengths {str([len(item) for item in train_data[0]])}')
 print(f'{len(test_data) = }  | image, label lengths {str([len(item) for item in test_data[0]])}')
-#testing
-#print(f'{train_data[0] = }\n{test_data[0] = }')
 
 class CrossEntropyCost(object):
     @staticmethod
@@ -84,7 +81,7 @@ class neural_network(object):
         if derivative:
             z = neural_network.sigmoid(z) 
             return (z*(1-z))
-        #safe_exp has default base of e
+        #exp has default base of e
         return 1/(1 + np.exp(-z,dtype=np.float32))
     
 
@@ -94,14 +91,9 @@ class neural_network(object):
 
         assert((isinstance(sizes, list) or isinstance(sizes,np.array)) and 'sizes needs to be a numpy array')
         self.sizes = sizes
-        '''
-        #self.biases = [(np.random.randn(y,1) for y in sizes[1:])] # no biases for input layer
-        #self.weights = [(np.random.randn(y,x) for x,y in zip(sizes[:-1],sizes[1:]))] #weights matrix for layers
-        #the above line indexs over lists [all sizes except last] and [all sizes except first], to create 
-        # matrices of layer by nextlayer
-        '''
+
         self.biases = bias_generator(sizes)
-        self.weights = weight_generator(sizes) #REMEMBER FOR LATER: mn * np = mp
+        self.weights = weight_generator(sizes)
         
     
     def update_batch(self,batch,learning_rate):
@@ -121,12 +113,12 @@ class neural_network(object):
         nabla_b = [np.zeros(b.shape,dtype=np.float32) for b in self.biases]
         nabla_w = [np.zeros(w.shape,dtype=np.float32) for w in self.weights]
         #first we need to make lists of:
-        #the error of each layer
-        #the activations of each layer
+            #the error of each layer
+            #the activations of each layer
+        
         weighted_sums = []
         current_activation = image.reshape(-1,1)
-        #print(f'{current_activation.shape = } (should be (784,1))')
-        
+         
         activations = [current_activation]
 
         for biases,weights in zip(self.biases,self.weights):
@@ -138,8 +130,8 @@ class neural_network(object):
             activations.append(current_activation)
 
         #backwards pass
-        #first layer
-        #will be calling error delta, to avoid naming issues
+            #first layer
+            #will be calling error delta, to avoid naming issues
         delta = self.cost.delta(weighted_sums[-1],activations[-1],label)
         nabla_b[-1] = delta
         nabla_w[-1] = safe_dot(delta,activations[-2].T)
@@ -147,57 +139,18 @@ class neural_network(object):
         for l in range(2,len(self.sizes)):
             z = weighted_sums[-l]
             sp = neural_network.sigmoid(z,derivative=True)
-            #print(f'{sp.shape = }')
-            #print(f'{self.weights[-l+1].T.shape = }\n{delta.shape = }')
             delta = safe_dot(self.weights[-l+1].T,delta) * sp
 
-            #print(f'{delta.shape = } \n{activations[-l-1].T.shape = }')
             nabla_b[-l] = delta
             nabla_w[-l] = safe_dot(delta,activations[-l-1].T)
         return (nabla_b,nabla_w)
-
-    '''def back_prop(self,image,label):
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
-        nabla_w = [np.zeros(w.shape) for w in self.biases]
-
-        activation = image
-        activations = [activation]
-
-        zs = [] #weighted inputs
-        for b,w in zip(self.biases,self.weights):
-            z = safe_dot(activation,w)+b
-            zs.append(z)
-            activation = neural_network.sigmoid(z)
-            activations.append(activation)
-        print(f'activation shapes:')
-        for a in activations:
-            print(f'\t{a.shape}')
-        #backwards pass
-        #first layer
-        error = neural_network.cost_derivative(activations[-1],label) * neural_network.sigmoid(zs[-1],derivative=True)
         
-        #i get why you wouldnt typically call this error, but you cant stop me
-        nabla_b[-1] = error
-        print(f'error shape:{error.shape} | transposed activations[-1] {np.transpose(activations[-1]).shape}')
-        nabla_w[-1] = safe_dot(error,np.transpose(activations[-1])) # -1 in activations should be -2
-
-        for layer in range(2,len(self.sizes)):
-            z = zs[-layer]
-            sp = neural_network.sigmoid(z,derivative=True)
-            #error = safe_dot(np.transpose(self.weights[-layer+1]),error) * sp
-            error = safe_dot(error,np.transpose(self.weights[-layer+1])) *sp
-
-            nabla_b[-layer] = error 
-            nabla_w[-layer] = safe_dot(error,np.transpose(-layer-1))
-
-        return (nabla_b,nabla_w)'''
-
+    #Stochastic gradient descent
     def SDG(self,training_dataset,epochs,batch_size,learning_rate):
         for i in range(epochs-1): #an epoch is the entire dataset
             print(f'starting epoch {i+1}')
             np.random.shuffle(training_dataset)
             ra = range(0,len(training_dataset),batch_size)
-            #print(list(ra))
             batches = [training_dataset[k:k+batch_size] for k in ra]
             for batch in batches:
                 self.update_batch(batch,learning_rate)
@@ -206,7 +159,6 @@ class neural_network(object):
 
     def forward(self,input): #need this funciton for later(and testing), not for backprop
         current_activation = input.reshape(-1,1)
-        #print(f'{current_activation.shape = }')
         for biases,weights in zip(self.biases,self.weights):
             current_activation = neural_network.sigmoid(safe_dot(weights,current_activation) + biases)
         return current_activation
