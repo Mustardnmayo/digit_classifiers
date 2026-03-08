@@ -15,7 +15,6 @@ def normalize(images):
     # hard coded 0-255 because i can
     images = np.array(images,dtype=np.float32) #ensure its a np array to use np vector operations
     images = images/255.0
-    #images = 2*images -1
     return images
 
 
@@ -27,25 +26,19 @@ train_images = train_dataset.data.numpy()
 train_labels = train_dataset.targets.numpy()
 
 train_images_flattened = np.array(train_images,dtype=np.float32).reshape(len(train_images),-1)
-#print(f'{train_images_flattened[0].shape = }\n{train_images_flattened[0] = }')
 
 train_images_flattened_normalized = normalize(train_images_flattened)
-
-#train_data = list(zip(train_images_flattened_normalized,probabilitificator(train_labels)))
-#list of tuples, (image,labels_probability_vector)
 
 test_images = test_dataset.data.numpy()
 test_labels = test_dataset.targets.numpy()
 
 test_images_flattened_normalized = normalize(np.array(test_images.reshape(len(test_images),-1),dtype=np.float32))
-#test_data = list(zip(test_images_flattened_normalized,probabilitificator(test_labels)))
 
 #for convertint it to .npz
 train_images, train_labels = train_images_flattened_normalized, probabilitificator(train_labels)
 
 test_images,test_labels = test_images_flattened_normalized, probabilitificator(test_labels)
 
-# will fix when file loading system is done
 def make_Mnist_data_file():
     print(f'writing...')
     np.savez_compressed('Mnist_data.npz',
@@ -67,17 +60,3 @@ def Load_data():
             make_Mnist_data_file()
         except Exception as e:
             print(f'Failed to make file because: {e}')
-
-'''
-#convert the data to json seralizable data
-try:
-    raise ZeroDivisionError
-    file = open(r'Mnist_data.json','w')
-    json.dump({
-            'train':train_data_seralizable,
-            'test':test_data_seralizable
-    },file,indent=2)
-    print(f'dumped data successfuly')
-except Exception as e:  
-    print(f'failed:\n{e}')
-'''
